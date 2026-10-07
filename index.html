@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBTI 100题性格测试</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #f6f7fb;
+            padding:20px;
+        }
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding:30px;
+            border-radius:16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        h1 {
+            text-align:center;
+            color:#333;
+            margin-bottom:10px;
+            font-size:26px;
+        }
+        .desc {
+            text-align:center;
+            color:#666;
+            margin-bottom:30px;
+        }
+        .img-block{
+            text-align:center;
+            margin:30px 0;
+        }
+        .img-block img{
+            max-width:70%;
+            border-radius:12px;
+        }
+        .question{
+            margin-bottom:26px;
+            padding-bottom:18px;
+            border-bottom:1px solid #eee;
+        }
+        .q-title{
+            font-weight:500;
+            margin-bottom:12px;
+            color:#222;
+        }
+        .option{
+            margin:9px 0;
+            cursor:pointer;
+            padding:7px;
+            border-radius:6px;
+        }
+        .option:hover{
+            background:#f0f4ff;
+        }
+        .option input{
+            margin-right:10px;
+        }
+        .btns{
+            text-align:center;
+            margin:40px 0 20px;
+        }
+        button{
+            padding:14px 32px;
+            background:#6366f1;
+            color:#fff;
+            border:none;
+            border-radius:8px;
+            font-size:16px;
+            cursor:pointer;
+            margin:0 8px;
+        }
+        button:disabled{
+            background:#b8b9f0;
+            cursor:not-allowed;
+        }
+        #result{
+            padding:24px;
+            background:#f0f4ff;
+            border-radius:12px;
+            margin-top:20px;
+            display:none;
+        }
+        .result-img{
+            text-align:center;
+            margin-bottom:20px;
+        }
+        .result-img img{
+            max-width:60%;
+            border-radius:12px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>MBTI 100题性格测试</h1>
+    <div class="desc">请根据你的真实情况选择，A=非常符合 B=比较符合 C=一般 D=不太符合 E=完全不符合</div>
+
+    <div id="quiz"></div>
+
+    <div class="btns">
+        <button id="submitBtn" disabled>提交测试</button>
+        <button onclick="window.location.reload()">重置</button>
+    </div>
+
+    <div id="result">
+        <div class="result-img">
+            < img src="https://picsum.photos/id/1011/600/350" alt="MBTI">
+        </div>
+        <h2>你的测试结果：<span id="typeText"></span></h2>
+        <p id="typeDesc" style="margin-top:16px;line-height:1.7;"></p >
+    </div>
+</div>
+
+<script>
+// 100道MBTI题目，标记维度：E/I S/N T/F J/P
+const questions = [
+    {q:"1. 聚会之后，我通常感觉精力充沛。", dim:"E", sign:"+"},
+    {q:"2. 我更喜欢关注事实细节，而不是抽象猜想。", dim:"S", sign:"+"},
+    {q:"3. 做决定时，我优先考虑逻辑公平，而非人情感受。", dim:"T", sign:"+"},
+    {q:"4. 我喜欢提前规划好日程，不喜欢临时变动。", dim:"J", sign:"+"},
+    {q:"5. 长时间社交后，我需要独处恢复精力。", dim:"E", sign:"-"},
+    {q:"6. 我喜欢思考未来可能性，多于当下现实。", dim:"S", sign:"-"},
+    {q:"7. 判断一件事，我更容易共情他人感受。", dim:"T", sign:"-"},
+    {q:"8. 我习惯灵活随性，计划可以随时调整。", dim:"J", sign:"-"},
+    {q:"9. 认识新朋友会让我感到兴奋。", dim:"E", sign:"+"},
+    {q:"10. 我更相信亲身观察到的信息。", dim:"S", sign:"+"},
+    {q:"11. 争论对错时，我很难因为情绪妥协原则。", dim:"T", sign:"+"},
+    {q:"12. 我讨厌事情拖到最后一刻。", dim:"J", sign:"+"},
+    {q:"13. 太多人在场会让我觉得疲惫。", dim:"E", sign:"-"},
+    {q:"14. 我喜欢挖掘想法背后的隐喻和关联。", dim:"S", sign:"-"},
+    {q:"15. 我会优先照顾别人情绪，再谈道理。", dim:"T", sign:"-"},
+    {q:"16. 留有弹性空间，我会更自在。", dim:"J", sign:"-"},
+    {q:"17. 我愿意主动发起聊天。", dim:"E", sign:"+"},
+    {q:"18. 阅读时我更在意真实发生的事情。", dim:"S", sign:"+"},
+    {q:"19. 评价方案好坏，优先看是否客观合理。", dim:"T", sign:"+"},
+    {q:"20. 任务最好有明确截止时间。", dim:"J", sign:"+"},
+];
+
+const qMore = [
+    {q:"21. 我很少主动找人闲聊。", dim:"E", sign:"-"},
+    {q:"22. 我喜欢想象新的创意和可能性。", dim:"S", sign:"-"},
+    {q:"23. 冲突发生时，我倾向安抚双方情绪。", dim:"T", sign:"-"},
+    {q:"24. 突发安排不会让我烦躁。", dim:"J", sign:"-"},
+    {q:"25. 参加多人活动是我的能量来源。", dim:"E", sign:"+"},
+    {q:"26. 我更擅长处理已经确定的事务。", dim:"S", sign:"+"},
+    {q:"27. 我认为规则应当一视同仁。", dim:"T", sign:"+"},
+    {q:"28. 我喜欢把房间、文件整理整齐。", dim:"J", sign:"+"},
+    {q:"29. 热闹环境会消耗我的精力。", dim:"E", sign:"-"},
+    {q:"30. 我对灵感、预感比较敏感。", dim:"S", sign:"-"},
+    {q:"31. 做选择时，人际关系影响很大。", dim:"T", sign:"-"},
+    {q:"32. 我经常临时决定要做什么。", dim:"J", sign:"-"},
+    {q:"33. 我乐于在团队中公开表达想法。", dim:"E", sign:"+"},
+    {q:"34. 学习新知识，我先看实际案例。", dim:"S", sign:"+"},
+    {q:"35. 我习惯客观分析利弊。", dim:"T", sign:"+"},
+    {q:"36. 重要事情，我会提前做好准备。", dim:"J", sign:"+"},
+    {q:"37. 我倾向先倾听，不轻易发言。", dim:"E", sign:"-"},
+    {q:"38. 我喜欢思考理论、概念。", dim:"S", sign:"-"},
+    {q:"39. 我担心直言会伤害别人感情。", dim:"T", sign:"-"},
+    {q:"40. 一成不变的计划会让我觉得束缚。", dim:"J", sign:"-"},
+    {q:"41. 经常和朋友聚会充电。", dim:"E", sign:"+"},
+    {q:"42. 我信赖经验和过往事实。", dim:"S", sign:"+"},
+    {q:"43. 谈判时看重公平，而非人情。", dim:"T", sign:"+"},
+    {q:"44. 清单、计划表对我很有用。", dim:"J", sign:"+"},
+    {q:"45. 周末我更愿意独处休息。", dim:"E", sign:"-"},
+    {q:"46. 我喜欢脑洞、假设性问题。", dim:"S", sign:"-"},
+    {q:"47. 别人的感受会影响我的判断。", dim:"T", sign:"-"},
+    {q:"48. 收尾工作我经常拖到最后。", dim:"J", sign:"-"},
+    {q:"49. 认识新朋友我会主动自我介绍。", dim:"E", sign:"+"},
+    {q:"50. 描述事情，我偏向写实。", dim:"S", sign:"+"},
+    {q:"51. 对错优先，情面其次。", dim:"T", sign:"+"},
+    {q:"52. 事情确定下来，我才安心。", dim:"J", sign:"+"},
+    {q:"53. 大量社交之后我需要安静独处。", dim:"E", sign:"-"},
+    {q:"54. 我喜欢寻找事物背后的规律。", dim:"S", sign:"-"},
+    {q:"55. 做决定，我会换位思考他人感受。", dim:"T", sign:"-"},
+    {q:"56. 我讨厌被严格时间表约束。", dim:"J", sign:"-"},
+    {q:"57. 小组讨论我积极发言。", dim:"E", sign:"+"},
+    {q:"58. 我更关注当下，不喜欢空想。", dim:"S", sign:"+"},
+    {q:"59. 我会理性评估方案优劣。", dim:"T", sign:"+"},
+    {q:"60. 我尽量提前完成任务，不赶截止日。", dim:"J", sign:"+"},
+    {q:"61. 我不爱成为人群焦点。", dim:"E", sign:"-"},
+    {q:"62. 我喜欢畅想未来的可能性。", dim:"S", sign:"-"},
+    {q:"63. 团队和谐比效率更重要。", dim:"T", sign:"-"},
+    {q:"64. 临时变动不会让我紧张。", dim:"J", sign:"-"},
+    {q:"65. 闲聊能让我放松开心。", dim:"E", sign:"+"},
+    {q:"66. 我擅长记住细节信息。", dim:"S", sign:"+"},
+    {q:"67. 我相信道理大于情感。", dim:"T", sign:"+"},
+    {q:"68. 我喜欢尽早敲定安排。", dim:"J", sign:"+"},
+    {q:"69. 长时间交谈会耗尽我的能量。", dim:"E", sign:"-"},
+    {q:"70. 我容易发现事物潜在联系。", dim:"S", sign:"-"},
+    {q:"71. 批评他人时我会委婉照顾情绪。", dim:"T", sign:"-"},
+    {q:"72. 保留选择余地，我觉得舒服。", dim:"J", sign:"-"},
+    {q:"73. 我很容易和陌生人打开话题。", dim:"E", sign:"+"},
+    {q:"74. 动手实操学习效果最好。", dim:"S", sign:"+"},
+    {q:"75. 争论中我追求事实真相。", dim:"T", sign:"+"},
+    {q:"76. 没计划的事情容易让我焦虑。", dim:"J", sign:"+"},
+    {q:"77. 我倾向少社交、保存精力。", dim:"E", sign:"-"},
+    {q:"78. 我喜欢抽象思考，不局限现实。", dim:"S", sign:"-"},
+    {q:"79. 我重视人与人之间的体谅。", dim:"T", sign:"-"},
+    {q:"80. 我喜欢随性安排生活。", dim:"J", sign:"-"},
+    {q:"81. 集体活动我愿意带动气氛。", dim:"E", sign:"+"},
+    {q:"82. 我相信亲眼所见的证据。", dim:"S", sign:"+"},
+    {q:"83. 管理事务优先考虑客观标准。", dim:"T", sign:"+"},
+    {q:"84. 项目最好分阶段设置节点。", dim:"J", sign:"+"},
+    {q:"85. 我更喜欢一对一深度聊天。", dim:"E", sign:"-"},
+    {q:"86. 我喜欢探索新想法、新概念。", dim:"S", sign:"-"},
+    {q:"87. 我不愿为道理伤害他人感情。", dim:"T", sign:"-"},
+    {q:"88. 留有备选方案会让我轻松。", dim:"J", sign:"-"},
+    {q:"89. 新环境里我主动结识人。", dim:"E", sign:"+"},
+    {q:"90. 解决问题，优先用成熟办法。", dim:"S", sign:"+"},
+    {q:"91. 公平的规则是最重要的。", dim:"T", sign:"+"},
+    {q:"92. 我习惯把待办事项列出来。", dim:"J", sign:"+"},
+    {q:"93. 人多的场合我倾向旁观。", dim:"E", sign:"-"},
+    {q:"94. 我喜欢思考假设、推演可能性。", dim:"S", sign:"-"},
+    {q:"95. 评价人，我看重善良共情。", dim:"T", sign:"-"},
+    {q:"96. 我经常临时改变计划。", dim:"J", sign:"-"},
+    {q:"97. 和别人交流想法是我的乐趣。", dim:"E", sign:"+"},
+    {q:"98. 我擅长落地执行，不喜欢空谈。", dim:"S", sign:"+"},
+    {q:"99. 做重大决定，我优先理性分析。", dim:"T", sign:"+"},
+    {q:"100. 我喜欢生活井然有序。", dim:"J", sign:"+"},
+];
+questions.push(...qMore);
+
+const quizWrap = document.getElementById('quiz');
+const submitBtn = document.getElementById('submitBtn');
+const typeText = document.getElementById('typeText');
+const typeDesc = document.getElementById('typeDesc');
+const resultBox = document.getElementById('result');
+
+const optionsText = ["A 非常符合","B 比较符合","C 一般","D 不太符合","E 完全不符合"];
+const scoreMap = {A:5,B:4,C:3,D:2,E:1};
+
+// 在第20、40、60、80题插入图片
+const imageAt = [20,40,60,80];
+// 4张不同图片
+const imgList = [
+    "https://picsum.photos/id/1025/700/400",
+    "https://picsum.photos/id/1035/700/400",
+    "https://picsum.photos/id/1006/700/400",
+    "https://picsum.photos/id/1018/700/400"
+];
+
+questions.forEach((item, idx)=>{
+    const num = idx+1;
+    if(imageAt.includes(num)){
+        const imgIndex = imageAt.indexOf(num);
+        const imgDiv = document.createElement('div');
+        imgDiv.className = "img-block";
+        imgDiv.innerHTML = `< img src="${imgList[imgIndex]}" alt="性格插画">`;
+        quizWrap.appendChild(imgDiv);
+    }
+
+    const divQ = document.createElement('div');
+    divQ.className = "question";
+    divQ.innerHTML = `<div class="q-title">${item.q}</div>`;
+
+    optionsText.forEach(opt=>{
+        const optDiv = document.createElement('div');
+        optDiv.className="option";
+        optDiv.innerHTML = `<input type="radio" name="q${idx}" value="${opt[0]}"> ${opt}`;
+        divQ.appendChild(optDiv);
+    })
+    quizWrap.appendChild(divQ);
+})
+
+// 判断全部题目是否答完
+quizWrap.addEventListener('change', ()=>{
+    const allAnswered = Array.from(document.querySelectorAll('div.question')).every(q=>{
+        return q.querySelector('input:checked')
+    })
+    submitBtn.disabled = !allAnswered;
+})
+
+submitBtn.onclick = function(){
+    let E=0,S=0,T=0,J=0;
+    let I=0,N=0,F=0,P=0;
+
+    questions.forEach((item, idx)=>{
+        const selected = document.querySelector(`input[name="q${idx}"]:checked`).value;
+        let sc = scoreMap[selected];
+        if(item.sign === "-") sc = 6 - sc;
+
+        switch(item.dim){
+            case "E": E += sc; break;
+            case "S": S += sc; break;
+            case "T": T += sc; break;
+            case "J": J += sc; break;
+        }
+    })
+    I = 500 - E;
+    N = 500 - S;
+    F = 500 - T;
+    P = 500 - J;
+
+    let res = "";
+    res += E>I ? "E":"I";
+    res += S>N ? "S":"N";
+    res += T>F ? "T":"F";
+    res += J>P ? "J":"P";
+
+    const descMap = {
+        "INTJ":"建筑师，富有远见，擅长战略思考，独立理性，喜欢长期规划。",
+        "INTP":"逻辑学家，热爱理论思考，好奇心强，善于挖掘底层原理。",
+        "ENTJ":"指挥官，果断自信，擅长统筹组织，目标感极强。",
+        "ENTP":"辩论家，思维灵活，喜欢头脑风暴，乐于挑战固有观点。",
+        "INFJ":"提倡者，洞察力强，理想主义，重视内在价值观。",
+        "INFP":"调停者，温柔共情，忠于理想，内心世界丰富。",
+        "ENFJ":"主人公，热情善沟通，擅长鼓舞他人，重视集体和谐。",
+        "ENFP":"竞选者，充满活力，创意丰富，热爱新鲜体验。",
+        "ISTJ":"检查员，务实稳重，严谨可靠，重视规则与责任。",
+        "ISFJ":"守卫者，细心体贴，乐于助人，擅长照顾身边人。",
+        "ESTJ":"总经理，干练直接，擅长组织管理，看重秩序。",
+        "ESFJ":"执政官，友善热心，擅长维护人际关系，重视社群。",
+        "ISTP":"鉴赏家，冷静务实，动手能力强，喜欢灵活解决问题。",
+        "ISFP":"探险家，敏感感性，热爱审美，活在当下。",
+        "ESTP":"企业家，行动力强，擅长应变，喜欢真实的体验。",
+        "ESFP":"表演者，热情活泼，享受当下，感染力强。"
+    }
+    typeText.innerText = res;
+    typeDesc.innerText = descMap[res] || "你的性格类型："+res;
+    resultBox.style.display = "block";
+    resultBox.scrollIntoView({behavior:"smooth"});
+}
+</script>
+</body>
+</html>
